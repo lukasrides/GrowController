@@ -1,5 +1,16 @@
 # GrowController
-Project building a GrowController that measures temperature and humidity. A dehumidifyer can be managed by an active solenoid (coming soon). The project is based on a RaspberryPI 2B and DHT22 sensor .
+A GrowController that measures temperature and humidity. A dehumidifyer can be managed by an active solenoid. The project is based on a RaspberryPI 2B and DHT22 sensor.
+
+## Setup 
+1. Create a new python env to manage python modules
+```
+python -m venv /path/to/new/virtual/environment
+```
+
+2. Install dependencies using requirements.txt
+```
+pip install -r requirements.txt
+```
 
 
 ## Running script on bootup
