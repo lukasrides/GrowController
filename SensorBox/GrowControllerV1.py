@@ -6,6 +6,7 @@ import board
 import thingspeak
 import requests
 import RPi.GPIO  as GPIO
+import csv
 
 
 class GrowController:
@@ -22,6 +23,7 @@ class GrowController:
                         'field2' : 2,
                         'field3' : 0
                     }
+        self.logPath = '/home/lukas/Programming/GrowController/SensorValues.csv'
         
         # setup of GPIO
         GPIO.setmode(GPIO.BCM)                                              # use board specific pin numbering
@@ -34,6 +36,7 @@ class GrowController:
         time.sleep(2.0)
         print("System initialized..")
 
+    # set the GPIO pin that enables/disables the dehumidifyer depending on the humidity
     def setDehumidifyer(self,humidity):
         if humidity > self.maxHumidity and self.dehumidifyerIsOn == False:
             GPIO.output(self.solenoidPin, GPIO.HIGH)                        # activate dehumidifyer
@@ -44,6 +47,13 @@ class GrowController:
             self.data['field3'] = 0
             self.dehumidifyerIsOn = False 
 
+    # store the data to a .csv file for later use
+    def updateDataLog(self,timeNow,temp,relh):
+        formatted_now = timeNow.strftime("%Y-%m-%d %H:%M")
+        with open(self.logPath,'a') as dataLog:
+            writer = csv.writer(dataLog)
+            writer.writerow([formatted_now,temp,relh])
+
     def readSensor(self):
         attempts = 0
         success = False
@@ -52,11 +62,14 @@ class GrowController:
             try:
                 temperature_c = self.dht_device.temperature
                 humidity = self.dht_device.humidity
+                timeNow = datetime.now()
                 time.sleep(0.5)
-                print(f"[{datetime.now()}] Temp: {temperature_c:.1f} C    Humidity: {humidity}%")
+
                 self.setDehumidifyer(humidity)
                 self.data['field1'] = temperature_c
                 self.data['field2'] = humidity
+                self.updateDataLog(timeNow, temperature_c, humidity)
+
                 response = requests.post(self.BASE_URL,data=self.data)      # post data to ThingSpeak 
                 response.raise_for_status()                                 # throws exception on bad reply
                 success = True
